@@ -9,6 +9,7 @@ output:
 #### Article ID: DFDwT
 #### Pilot: Camilla Griffiths
 #### Co-pilot: Gustav Nilsonne
+#### Co-pilot 2: Bria Long
 #### Start date: 03/12/2017
 #### End date: 03/17/2017 
 
@@ -76,7 +77,7 @@ I could not load the data as is into R because it was highly formatted with mult
 8. Changed 'Error Differential' variable name to 'Error_D'
 
 Co-pilot's note: Have not attempted to reproduce this step.
-  
+
 ```{r}
 expt1 <- read_csv("data/data_ManualClean.csv", 
      col_types = cols(`Gender (1=female)` = col_factor(levels = c("Female", "Male"))))
@@ -121,25 +122,37 @@ Therefore, there were no trials excluded in this replication analysis.
 ### Descriptive statistics
 
 ```{r}
-#mean reproduction errors by agency condition
-expt1.tidy %>%
+## gather mean reproduction errors by agency condition
+agencyStats=expt1.tidy %>%
   mutate(agency=as.factor(agency))%>%
-  mutate(effort=as.factor(effort)) %>%
   group_by(agency) %>%
   summarise(mean_agency= mean(rating), SD_agency=sd(rating))
-#mean reproduction errors by effort condition 
-expt1.tidy %>%
+
+## compare agency mean and sd (rounded) vs. reported values
+# agent = 1
+compareValues(round(agencyStats$mean_agency[1],0),-322) # match
+compareValues(round(agencyStats$SD_agency[1],0),236) # minor error
+# non-agent = 2
+compareValues(round(agencyStats$mean_agency[2],0),-56) # match
+compareValues(round(agencyStats$SD_agency[2],0),265) # minor error
+
+## gather reproduction errors by effort condition 
+effortStats=expt1.tidy %>%
+  mutate(effort=as.factor(effort)) %>%
   group_by(effort) %>%
   summarise(mean_effort= mean(rating), SD_effort=sd(rating))
 
-#Descriptive Statistic Errors in Standard Deviation results!
-compareValues(reportedValue = 236, obtainedValue = 239)
-compareValues(reportedValue = 265, obtainedValue = 266)
-compareValues(reportedValue = 230, obtainedValue = 288)
-compareValues(reportedValue = 228, obtainedValue = 283)
+## compare effort mean and sd (rounded) vs. reported values
+# high effort
+compareValues(round(effortStats$mean_effort[1],0),-170) # match
+compareValues(round(effortStats$SD_effort[1],0),228) # major error
+# low effort
+compareValues(round(effortStats$mean_effort[2],0),-208) # match
+compareValues(round(effortStats$SD_effort[2],0),230) # major error
+
 ```
 
-There were a number of numerical errors in the descriptive statistics reported in the paper, namely in the reported standard deviation values for the mean agency and effort condition values. Below is a summary of those differences. 
+Summary: There were a number of numerical errors in the descriptive statistics reported in the paper, namely in the reported standard deviation values for the mean agency and effort condition values (2 are minor numerical errors, and 2 are major numerical errors). Below is a summary of those differences. 
 
 1. Agency condition: M= -322ms, SD=239 (3pt difference from reported SD: 236)
 2. No Agency condition: M=-56ms, SD=266 (1pt difference from reported SD: 265)
@@ -147,17 +160,18 @@ There were a number of numerical errors in the descriptive statistics reported i
 3. Low Effort condition: M=-208ms, SD=288 (58pt difference from reported SD:230)
 4. High Effort condition: M=-170ms, SD=283 (55pt difference from reported SD:228)
 
+Co-pilot's note: The data provided by the authors is not raw data per se, but are subject means already aggregated over different sets of trials. It is possible that these differneces in SD calculatings from aggregating data in different ways, but I could not check this.
+
 ### Inferential statistics
 
 ```{r}
-#2x2 anova to test main effects and interaction of agency & effort conditions 
+## 2x2 anova to test main effects and interaction of agency & effort conditions 
 expt1.tidy$agency=as.factor(expt1.tidy$agency)
 expt1.tidy$effort=as.factor(expt1.tidy$effort)
 expt1.tidy$PID=as.factor(expt1.tidy$PID)
+expt1.tidy$rating=as.double(expt1.tidy$rating)
 
-res1=ezANOVA(dv= .(rating), wid= .(PID), within= .(agency, effort), detailed=TRUE, data=expt1.tidy)
-res1
-
+res1=ezANOVA(dv= .(rating), wid= .(PID), within= .(agency, effort), detailed=TRUE, data=data.frame(expt1.tidy)) # Note BL: had to convert to data frame.
 unlisted <- unlist(res1)
 
 aov_stats <- tibble(effect = c("agency", "effort", "agency:effort"),
@@ -168,56 +182,47 @@ aov_stats <- tibble(effect = c("agency", "effort", "agency:effort"),
   mutate(partial_eta_squared = SSn / (SSn + SSd)) %>% 
   select(-SSn, -SSd)
 
-
 aov_stats
 
-#Compare stats for main effects and interaction 
-compareValues(reportedValue = 54.54, obtainedValue = aov_stats$F[1]) #agency main effect F statistic
-compareValues(reportedValue = 0.62, obtainedValue = 0.62) #agency main effect partial eta squared
-compareValues(reportedValue = 14.43, obtainedValue = 14.43) #effort main effect F statistic
-compareValues(reportedValue = 0.3, obtainedValue = 0.3) #effort main effect partial eta squared
-compareValues(reportedValue = 2.12, obtainedValue = 2.12) #effort*agency interaction F statistic
-compareValues(reportedValue = 0.06, obtainedValue = 0.06) #effort*agency interaction partial eta squared 
+## Compare stats for main effects and interaction 
+# agency
+compareValues(reportedValue = 54.54, obtainedValue = aov_stats$F[1]) #agency main effect F statistic, minor error
+compareValues(reportedValue = 0.62, obtainedValue = aov_stats$partial_eta_squared[1]) #agency main effect partial eta squared, match
+# agency p-value: MATCH (fits within reported interval)
+
+# effort
+compareValues(reportedValue = 14.43, obtainedValue = aov_stats$F[2]) #effort main effect F statistic, match
+compareValues(reportedValue = 0.3, obtainedValue = aov_stats$partial_eta_squared[2]) #effort main effect partial eta squared, match
+compareValues(reportedValue = 0.001, obtainedValue = aov_stats$p[2], isP = T) #effort main effect partial eta squared, match
+
+# interaction
+compareValues(reportedValue = 2.12, obtainedValue = aov_stats$F[3]) #effort*agency interaction F statistic, match
+compareValues(reportedValue = 0.06, obtainedValue = aov_stats$partial_eta_squared[3]) #effort*agency interaction partial eta squared, match 
+compareValues(reportedValue = 0.154, obtainedValue = aov_stats$p[3], isP = T) #effort*agency interaction partial eta squared, match
 
 ```
 
-For their main analysis to test their hypothesis, they ran a 2X2 anova testing the main effects and interaction of effort and agency conditions on the interval reproduction errors outcome variable. Replication of these anayleses yielded the same exact statistics reported in section 2.2 of their results section for experiment 1. There were not any minor numerical errors or otherwise in these findings. 
-
+Summary: For their main analysis to test their hypothesis, they ran a 2X2 anova testing the main effects and interaction of effort and agency conditions on the interval reproduction errors outcome variable. Replication of these anayleses yielded the same exact statistics reported in section 2.2 of their results section for experiment 1. There was one minor numerical errors in these findings. 
 
 From the paper: 
-> "Although the interaction – critical to our research question –
-was non-significant, we nevertheless performed two planned contrasts
-to investigate the nature of effects across ‘‘Presence of
-Agency” and ‘‘Physical Effort”. In the ‘‘Agency” condition, reproduction
-errors were significantly larger under ‘‘Low” than ‘‘High”
-effort, t(34) = 3.46, p = 0.001, dz = 0.589, while this effect was not
-significant in the ‘‘No Agency” condition, t(34) = 1.59, p = 0.122,
-dz = 0.27."
+> "Although the interaction – critical to our research question – was non-significant, we nevertheless performed two planned contrasts to investigate the nature of effects across ‘‘Presence of Agency” and ‘‘Physical Effort”. In the ‘‘Agency” condition, reproduction errors were significantly larger under ‘‘Low” than ‘‘High” effort, t(34) = 3.46, p = 0.001, dz = 0.589, while this effect was not significant in the ‘‘No Agency” condition, t(34) = 1.59, p = 0.122, dz = 0.27."
 
 ```{r planned contrasts}
-#library(lmerTest)
-#summary(lm(A_lowE - A_highE ~1, data=expt1))
-#summary(lm(NA_lowE - NA_highE ~1, data=expt1))
-
-#compareValues(reportedValue = 3.46, obtainedValue = 3.46) #Within agency cells effort effects -- t-statistic
-#compareValues(reportedValue = 0.001, obtainedValue = 0.001, isP = T) #Within agency cells effort effects -- p-value
-#compareValues(reportedValue = 1.59, obtainedValue = -1.59) #Within no agency cells effort effects -- t-statistic
-#compareValues(reportedValue = 0.122, obtainedValue = 0.122, isP = T) #Within no agency cells effort effects -- p-value
-
-# Alternative approach by GN on advice of MF
 ttest1 <- t.test(expt1$A_lowE, expt1$A_highE, paired = T)
 ttest2 <- t.test(expt1$NA_lowE, expt1$NA_highE, paired = T)
 
-compareValues(reportedValue = -1.59, obtainedValue = ttest2$statistic) 
+compareValues(reportedValue = -3.46, obtainedValue = ttest1$statistic) # match
+compareValues(reportedValue = 1.59, obtainedValue = ttest2$statistic) # wrong sign - major error.
 
 # Calculate dz
 dz1 <- mean(expt1$A_lowE - expt1$A_highE) / sd(expt1$A_lowE - expt1$A_highE)
 dz2 <- mean(expt1$NA_lowE - expt1$NA_highE) / sd(expt1$NA_lowE - expt1$NA_highE)
 
-compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) 
+compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) # minor error
+compareValues(reportedValue = 0.27, obtainedValue = abs(dz2)) # match
 
 ```
-In order to replicate the planned contrasts that they performed, I ran a regression testing the difference in interval reproduction ratings between Effort levels within each agency condition, which produced the exact same statistics reported in the paper, with one big exception. It appears that the authors reported the t-statistic for the 'No Agency' condition contrast with the wrong sign, reporting a positive value when the value I obtained was the same number, just negative. 
+Summary: one major error reporting a t-value (reversed sign), one minor error reporting cohen's D.
 
 ## Step 5: Conclusion
 
@@ -228,16 +233,12 @@ codReport(Report_Type = 'joint',
           Insufficient_Information_Errors = 0,
           Decision_Errors = 0, 
           Major_Numerical_Errors = 3, 
-          Minor_Numerical_Errors = 5)
+          Minor_Numerical_Errors = 4)
 ```
 
 
-This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Moreover, there was a t-statistic reported with the opposite sign (positive instead of negative) than what was yielded in this check. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect. The failure to yield a significant interaction effect meant that the authors were unable to support their hypothesis that reproduction errors in agency tasks would be reduced under greater physical effort. 
+This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might technically classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Moreover, there was a t-statistic reported with the opposite sign (positive instead of negative) than what was yielded in this check. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect. The failure to yield a significant interaction effect meant that the authors were unable to support their hypothesis that reproduction errors in agency tasks would be reduced under greater physical effort. 
 
-Comment by GN: Added checks of dz values, one of which turned out a minor numerical error. Also changed from linear models to standard t-tests, which caused another minor numerical error to turn up. These errors are small and could well be explained by differences in software packages or such.
-
-
-[This function will output information about the package versions used in this report:]
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
 devtools::session_info()

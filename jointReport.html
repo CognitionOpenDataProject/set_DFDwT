@@ -142,6 +142,9 @@ $(document).ready(function () {
 <div id="co-pilot-gustav-nilsonne" class="section level4">
 <h4>Co-pilot: Gustav Nilsonne</h4>
 </div>
+<div id="co-pilot-2-bria-long" class="section level4">
+<h4>Co-pilot 2: Bria Long</h4>
+</div>
 <div id="start-date-03122017" class="section level4">
 <h4>Start date: 03/12/2017</h4>
 </div>
@@ -214,64 +217,59 @@ summary(expt1.tidy$zscore)</code></pre>
 </div>
 <div id="descriptive-statistics" class="section level3">
 <h3>Descriptive statistics</h3>
-<pre class="r"><code>#mean reproduction errors by agency condition
-expt1.tidy %&gt;%
+<pre class="r"><code>## gather mean reproduction errors by agency condition
+agencyStats=expt1.tidy %&gt;%
   mutate(agency=as.factor(agency))%&gt;%
-  mutate(effort=as.factor(effort)) %&gt;%
   group_by(agency) %&gt;%
-  summarise(mean_agency= mean(rating), SD_agency=sd(rating))</code></pre>
-<pre><code>## # A tibble: 2 x 3
-##   agency mean_agency SD_agency
-##   &lt;fctr&gt;       &lt;dbl&gt;     &lt;dbl&gt;
-## 1      A  -321.68114  239.8910
-## 2     NA   -56.39886  266.2109</code></pre>
-<pre class="r"><code>#mean reproduction errors by effort condition 
-expt1.tidy %&gt;%
+  summarise(mean_agency= mean(rating), SD_agency=sd(rating))
+
+## compare agency mean and sd (rounded) vs. reported values
+# agent = 1
+compareValues(round(agencyStats$mean_agency[1],0),-322) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (-322) and the obtained value (-322) differed by 0%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(round(agencyStats$SD_agency[1],0),236) # minor error</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (240) and the obtained value (236) differed by 1.67%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code># non-agent = 2
+compareValues(round(agencyStats$mean_agency[2],0),-56) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (-56) and the obtained value (-56) differed by 0%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(round(agencyStats$SD_agency[2],0),265) # minor error</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (266) and the obtained value (265) differed by 0.38%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code>## gather reproduction errors by effort condition 
+effortStats=expt1.tidy %&gt;%
+  mutate(effort=as.factor(effort)) %&gt;%
   group_by(effort) %&gt;%
-  summarise(mean_effort= mean(rating), SD_effort=sd(rating))</code></pre>
-<pre><code>## # A tibble: 2 x 3
-##   effort mean_effort SD_effort
-##    &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;
-## 1  highE    -170.038  283.3347
-## 2   lowE    -208.042  288.2744</code></pre>
-<pre class="r"><code>#Descriptive Statistic Errors in Standard Deviation results!
-compareValues(reportedValue = 236, obtainedValue = 239)</code></pre>
-<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (236) and the obtained value (239) differed by 1.27%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 265, obtainedValue = 266)</code></pre>
-<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (265) and the obtained value (266) differed by 0.38%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 230, obtainedValue = 288)</code></pre>
-<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (230) and the obtained value (288) differed by 25.22%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 228, obtainedValue = 283)</code></pre>
-<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (228) and the obtained value (283) differed by 24.12%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
-<p>There were a number of numerical errors in the descriptive statistics reported in the paper, namely in the reported standard deviation values for the mean agency and effort condition values. Below is a summary of those differences.</p>
+  summarise(mean_effort= mean(rating), SD_effort=sd(rating))
+
+## compare effort mean and sd (rounded) vs. reported values
+# high effort
+compareValues(round(effortStats$mean_effort[1],0),-170) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (-170) and the obtained value (-170) differed by 0%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(round(effortStats$SD_effort[1],0),228) # major error</code></pre>
+<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (283) and the obtained value (228) differed by 19.43%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code># low effort
+compareValues(round(effortStats$mean_effort[2],0),-208) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (-208) and the obtained value (-208) differed by 0%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(round(effortStats$SD_effort[2],0),230) # major error</code></pre>
+<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (288) and the obtained value (230) differed by 20.14%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
+<p>Summary: There were a number of numerical errors in the descriptive statistics reported in the paper, namely in the reported standard deviation values for the mean agency and effort condition values (2 are minor numerical errors, and 2 are major numerical errors). Below is a summary of those differences.</p>
 <ol style="list-style-type: decimal">
 <li>Agency condition: M= -322ms, SD=239 (3pt difference from reported SD: 236)</li>
 <li><p>No Agency condition: M=-56ms, SD=266 (1pt difference from reported SD: 265)</p></li>
 <li>Low Effort condition: M=-208ms, SD=288 (58pt difference from reported SD:230)</li>
 <li><p>High Effort condition: M=-170ms, SD=283 (55pt difference from reported SD:228)</p></li>
 </ol>
+<p>Co-pilot’s note: The data provided by the authors is not raw data per se, but are subject means already aggregated over different sets of trials. It is possible that these differneces in SD calculatings from aggregating data in different ways, but I could not check this.</p>
 </div>
 <div id="inferential-statistics" class="section level3">
 <h3>Inferential statistics</h3>
-<pre class="r"><code>#2x2 anova to test main effects and interaction of agency &amp; effort conditions 
+<pre class="r"><code>## 2x2 anova to test main effects and interaction of agency &amp; effort conditions 
 expt1.tidy$agency=as.factor(expt1.tidy$agency)
 expt1.tidy$effort=as.factor(expt1.tidy$effort)
 expt1.tidy$PID=as.factor(expt1.tidy$PID)
+expt1.tidy$rating=as.double(expt1.tidy$rating)
 
-res1=ezANOVA(dv= .(rating), wid= .(PID), within= .(agency, effort), detailed=TRUE, data=expt1.tidy)
-res1</code></pre>
-<pre><code>## $ANOVA
-##          Effect DFn DFd         SSn       SSd         F                p
-## 1   (Intercept)   1  34 5003057.024 7005573.0 24.281232 0.00002131681553
-## 2        agency   1  34 2463114.189 1535648.3 54.534545 0.00000001462904
-## 3        effort   1  34   50550.641  119135.5 14.426608 0.00057503697862
-## 4 agency:effort   1  34    8798.177  140996.1  2.121605 0.15440798522547
-##   p&lt;.05          ges
-## 1     * 0.3624245474
-## 2     * 0.2186622915
-## 3     * 0.0057107085
-## 4       0.0009986409</code></pre>
-<pre class="r"><code>unlisted &lt;- unlist(res1)
+res1=ezANOVA(dv= .(rating), wid= .(PID), within= .(agency, effort), detailed=TRUE, data=data.frame(expt1.tidy)) # Note BL: had to convert to data frame.
+unlisted &lt;- unlist(res1)
 
 aov_stats &lt;- tibble(effect = c(&quot;agency&quot;, &quot;effort&quot;, &quot;agency:effort&quot;),
   F = c(as.double(unlisted[&quot;ANOVA.F2&quot;]), as.double(unlisted[&quot;ANOVA.F3&quot;]), as.double(unlisted[&quot;ANOVA.F4&quot;])), 
@@ -281,7 +279,6 @@ aov_stats &lt;- tibble(effect = c(&quot;agency&quot;, &quot;effort&quot;, &quot;
   mutate(partial_eta_squared = SSn / (SSn + SSd)) %&gt;% 
   select(-SSn, -SSd)
 
-
 aov_stats</code></pre>
 <pre><code>## # A tibble: 3 x 4
 ##          effect         F                p partial_eta_squared
@@ -289,43 +286,46 @@ aov_stats</code></pre>
 ## 1        agency 54.534545 0.00000001462904          0.61596911
 ## 2        effort 14.426608 0.00057503697862          0.29790663
 ## 3 agency:effort  2.121605 0.15440798522547          0.05873507</code></pre>
-<pre class="r"><code>#Compare stats for main effects and interaction 
-compareValues(reportedValue = 54.54, obtainedValue = aov_stats$F[1]) #agency main effect F statistic</code></pre>
+<pre class="r"><code>## Compare stats for main effects and interaction 
+# agency
+compareValues(reportedValue = 54.54, obtainedValue = aov_stats$F[1]) #agency main effect F statistic, minor error</code></pre>
 <pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (54.54) and the obtained value (54.53) differed by 0.02%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 0.62, obtainedValue = 0.62) #agency main effect partial eta squared</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 0.62, obtainedValue = aov_stats$partial_eta_squared[1]) #agency main effect partial eta squared, match</code></pre>
 <pre><code>## [1] &quot;MATCH. The reported value (0.62) and the obtained value (0.62) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 14.43, obtainedValue = 14.43) #effort main effect F statistic</code></pre>
+<pre class="r"><code># agency p-value: MATCH (fits within reported interval)
+
+# effort
+compareValues(reportedValue = 14.43, obtainedValue = aov_stats$F[2]) #effort main effect F statistic, match</code></pre>
 <pre><code>## [1] &quot;MATCH. The reported value (14.43) and the obtained value (14.43) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 0.3, obtainedValue = 0.3) #effort main effect partial eta squared</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 0.3, obtainedValue = aov_stats$partial_eta_squared[2]) #effort main effect partial eta squared, match</code></pre>
 <pre><code>## [1] &quot;MATCH. The reported value (0.3) and the obtained value (0.3) differed by 0%. NB obtained value was rounded to 1 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 2.12, obtainedValue = 2.12) #effort*agency interaction F statistic</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 0.001, obtainedValue = aov_stats$p[2], isP = T) #effort main effect partial eta squared, match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.001) and the obtained value (0.001) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
+<pre class="r"><code># interaction
+compareValues(reportedValue = 2.12, obtainedValue = aov_stats$F[3]) #effort*agency interaction F statistic, match</code></pre>
 <pre><code>## [1] &quot;MATCH. The reported value (2.12) and the obtained value (2.12) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<pre class="r"><code>compareValues(reportedValue = 0.06, obtainedValue = 0.06) #effort*agency interaction partial eta squared </code></pre>
+<pre class="r"><code>compareValues(reportedValue = 0.06, obtainedValue = aov_stats$partial_eta_squared[3]) #effort*agency interaction partial eta squared, match </code></pre>
 <pre><code>## [1] &quot;MATCH. The reported value (0.06) and the obtained value (0.06) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<p>For their main analysis to test their hypothesis, they ran a 2X2 anova testing the main effects and interaction of effort and agency conditions on the interval reproduction errors outcome variable. Replication of these anayleses yielded the same exact statistics reported in section 2.2 of their results section for experiment 1. There were not any minor numerical errors or otherwise in these findings.</p>
+<pre class="r"><code>compareValues(reportedValue = 0.154, obtainedValue = aov_stats$p[3], isP = T) #effort*agency interaction partial eta squared, match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.154) and the obtained value (0.154) differed by 0%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
+<p>Summary: For their main analysis to test their hypothesis, they ran a 2X2 anova testing the main effects and interaction of effort and agency conditions on the interval reproduction errors outcome variable. Replication of these anayleses yielded the same exact statistics reported in section 2.2 of their results section for experiment 1. There was one minor numerical errors in these findings.</p>
 <p>From the paper: &gt; “Although the interaction – critical to our research question – was non-significant, we nevertheless performed two planned contrasts to investigate the nature of effects across ‘‘Presence of Agency” and ‘‘Physical Effort”. In the ‘‘Agency” condition, reproduction errors were significantly larger under ‘‘Low” than ‘‘High” effort, t(34) = 3.46, p = 0.001, dz = 0.589, while this effect was not significant in the ‘‘No Agency” condition, t(34) = 1.59, p = 0.122, dz = 0.27.&quot;</p>
-<pre class="r"><code>#library(lmerTest)
-#summary(lm(A_lowE - A_highE ~1, data=expt1))
-#summary(lm(NA_lowE - NA_highE ~1, data=expt1))
-
-#compareValues(reportedValue = 3.46, obtainedValue = 3.46) #Within agency cells effort effects -- t-statistic
-#compareValues(reportedValue = 0.001, obtainedValue = 0.001, isP = T) #Within agency cells effort effects -- p-value
-#compareValues(reportedValue = 1.59, obtainedValue = -1.59) #Within no agency cells effort effects -- t-statistic
-#compareValues(reportedValue = 0.122, obtainedValue = 0.122, isP = T) #Within no agency cells effort effects -- p-value
-
-# Alternative approach by GN on advice of MF
-ttest1 &lt;- t.test(expt1$A_lowE, expt1$A_highE, paired = T)
+<pre class="r"><code>ttest1 &lt;- t.test(expt1$A_lowE, expt1$A_highE, paired = T)
 ttest2 &lt;- t.test(expt1$NA_lowE, expt1$NA_highE, paired = T)
 
-compareValues(reportedValue = -1.59, obtainedValue = ttest2$statistic) </code></pre>
-<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (-1.59) and the obtained value (-1.58) differed by 0.63%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+compareValues(reportedValue = -3.46, obtainedValue = ttest1$statistic) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (-3.46) and the obtained value (-3.46) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 1.59, obtainedValue = ttest2$statistic) # wrong sign - major error.</code></pre>
+<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (1.59) and the obtained value (-1.58) differed by 199.37%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
 <pre class="r"><code># Calculate dz
 dz1 &lt;- mean(expt1$A_lowE - expt1$A_highE) / sd(expt1$A_lowE - expt1$A_highE)
 dz2 &lt;- mean(expt1$NA_lowE - expt1$NA_highE) / sd(expt1$NA_lowE - expt1$NA_highE)
 
-compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) </code></pre>
+compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) # minor error</code></pre>
 <pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (0.589) and the obtained value (0.585) differed by 0.68%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
-<p>In order to replicate the planned contrasts that they performed, I ran a regression testing the difference in interval reproduction ratings between Effort levels within each agency condition, which produced the exact same statistics reported in the paper, with one big exception. It appears that the authors reported the t-statistic for the ‘No Agency’ condition contrast with the wrong sign, reporting a positive value when the value I obtained was the same number, just negative.</p>
+<pre class="r"><code>compareValues(reportedValue = 0.27, obtainedValue = abs(dz2)) # match</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.27) and the obtained value (0.27) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<p>Summary: one major error reporting a t-value (reversed sign), one minor error reporting cohen’s D.</p>
 </div>
 </div>
 <div id="step-5-conclusion" class="section level2">
@@ -335,7 +335,7 @@ compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) </code></pre>
           Insufficient_Information_Errors = 0,
           Decision_Errors = 0, 
           Major_Numerical_Errors = 3, 
-          Minor_Numerical_Errors = 5)</code></pre>
+          Minor_Numerical_Errors = 4)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -351,14 +351,12 @@ compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) </code></pre>
 <td align="right">0</td>
 <td align="right">0</td>
 <td align="right">3</td>
-<td align="right">5</td>
+<td align="right">4</td>
 <td align="left">Failure</td>
 </tr>
 </tbody>
 </table>
-<p>This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Moreover, there was a t-statistic reported with the opposite sign (positive instead of negative) than what was yielded in this check. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect. The failure to yield a significant interaction effect meant that the authors were unable to support their hypothesis that reproduction errors in agency tasks would be reduced under greater physical effort.</p>
-<p>Comment by GN: Added checks of dz values, one of which turned out a minor numerical error. Also changed from linear models to standard t-tests, which caused another minor numerical error to turn up. These errors are small and could well be explained by differences in software packages or such.</p>
-<p>[This function will output information about the package versions used in this report:]</p>
+<p>This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might technically classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Moreover, there was a t-statistic reported with the opposite sign (positive instead of negative) than what was yielded in this check. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect. The failure to yield a significant interaction effect meant that the authors were unable to support their hypothesis that reproduction errors in agency tasks would be reduced under greater physical effort.</p>
 <pre class="r"><code>devtools::session_info()</code></pre>
 <pre><code>##  setting  value                       
 ##  version  R version 3.3.2 (2016-10-31)
