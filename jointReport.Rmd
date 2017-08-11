@@ -51,6 +51,7 @@ library(ez) # for anova
 ## Step 2: Load data
 
 I could not load the data as is into R because it was highly formatted with multiple tabs, headers and subheaders in Excel so I made the following changes in Excel in order to be able to import into R: 
+
 1. Copied just Experiment 1 data (only data of interest here) into a new Excel workbook
 2. Saved the new workbook as data_ManualClean
 3. Changed 'Participant ID' to PID 
@@ -160,7 +161,7 @@ Summary: There were a number of numerical errors in the descriptive statistics r
 3. Low Effort condition: M=-208ms, SD=288 (58pt difference from reported SD:230)
 4. High Effort condition: M=-170ms, SD=283 (55pt difference from reported SD:228)
 
-Co-pilot's note: The data provided by the authors is not raw data per se, but are subject means already aggregated over different sets of trials. It is possible that these differneces in SD calculatings from aggregating data in different ways, but I could not check this.
+Co-pilot's note: The data provided by the authors is not raw data per se, but are subject means already aggregated over different sets of trials. It is possible that these differences in SD calculations are from aggregating data in different ways, but I could not check this.
 
 ### Inferential statistics
 
@@ -209,10 +210,10 @@ From the paper:
 
 ```{r planned contrasts}
 ttest1 <- t.test(expt1$A_lowE, expt1$A_highE, paired = T)
-ttest2 <- t.test(expt1$NA_lowE, expt1$NA_highE, paired = T)
+ttest2 <- t.test(expt1$NA_highE, expt1$NA_lowE , paired = T)
 
 compareValues(reportedValue = -3.46, obtainedValue = ttest1$statistic) # match
-compareValues(reportedValue = 1.59, obtainedValue = ttest2$statistic) # wrong sign - major error.
+compareValues(reportedValue = 1.59, obtainedValue = ttest2$statistic) # minor error
 
 # Calculate dz
 dz1 <- mean(expt1$A_lowE - expt1$A_highE) / sd(expt1$A_lowE - expt1$A_highE)
@@ -232,12 +233,13 @@ codReport(Report_Type = 'joint',
           Article_ID = 'DFDwT', 
           Insufficient_Information_Errors = 0,
           Decision_Errors = 0, 
-          Major_Numerical_Errors = 3, 
-          Minor_Numerical_Errors = 4)
+          Major_Numerical_Errors = 2, 
+          Minor_Numerical_Errors = 4,
+          Author_Assistance = F)
 ```
 
 
-This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might technically classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Moreover, there was a t-statistic reported with the opposite sign (positive instead of negative) than what was yielded in this check. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect. The failure to yield a significant interaction effect meant that the authors were unable to support their hypothesis that reproduction errors in agency tasks would be reduced under greater physical effort. 
+This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might technically classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect.
 
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
