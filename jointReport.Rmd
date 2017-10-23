@@ -11,7 +11,7 @@ output:
 #### Co-pilot: Gustav Nilsonne
 #### Co-pilot 2: Bria Long
 #### Start date: 03/12/2017
-#### End date: 03/17/2017 
+#### End date: 10/23/2017 
 
 -------
 
@@ -82,6 +82,13 @@ Co-pilot's note: Have not attempted to reproduce this step.
 ```{r}
 expt1 <- read_csv("data/data_ManualClean.csv", 
      col_types = cols(`Gender (1=female)` = col_factor(levels = c("Female", "Male"))))
+
+expt1 <- expt1 %>%
+  rowwise() %>%
+  mutate(agency_effortCombined = mean(c(A_lowE, A_highE)),
+         noagency_effortCombined = mean(c(NA_lowE, NA_highE)),
+         loweffort_agencyCombined = mean(c(A_lowE, NA_lowE)),
+         higheffort_agencyCombined = mean(c(A_highE, NA_highE)))
 ```
 
 ## Step 3: Tidy data
@@ -92,7 +99,8 @@ To reproduce analyses in the specified 2.2 results section, I will only be looki
 expt1.tidy= expt1 %>%
   select(PID, A_lowE:NA_highE) %>%
   gather(title, rating, A_lowE:NA_highE) %>%
-  separate(title, c("agency", "effort"), sep="_")
+  separate(title, c("agency", "effort"), sep="_") %>%
+  mutate(agency = recode(agency, `A` = "Agency", `NA` = "No Agency"))
 ```
 
 ## Step 4: Run analysis
@@ -122,20 +130,22 @@ Therefore, there were no trials excluded in this replication analysis.
 
 ### Descriptive statistics
 
+First attempt (without author assistance):
+
 ```{r}
 ## gather mean reproduction errors by agency condition
 agencyStats=expt1.tidy %>%
-  mutate(agency=as.factor(agency))%>%
+  mutate(agency=as.factor(agency)) %>%
   group_by(agency) %>%
   summarise(mean_agency= mean(rating), SD_agency=sd(rating))
 
 ## compare agency mean and sd (rounded) vs. reported values
 # agent = 1
-compareValues(round(agencyStats$mean_agency[1],0),-322) # match
-compareValues(round(agencyStats$SD_agency[1],0),236) # minor error
+compareValues(obtainedValue = agencyStats$mean_agency[1], reportedValue = -322) # match
+compareValues(obtainedValue = agencyStats$SD_agency[1], reportedValue =  236) # minor error
 # non-agent = 2
-compareValues(round(agencyStats$mean_agency[2],0),-56) # match
-compareValues(round(agencyStats$SD_agency[2],0),265) # minor error
+compareValues(obtainedValue = agencyStats$mean_agency[2], reportedValue = -56) # match
+compareValues(obtainedValue = agencyStats$SD_agency[2], reportedValue = 265) # minor error
 
 ## gather reproduction errors by effort condition 
 effortStats=expt1.tidy %>%
@@ -150,18 +160,49 @@ compareValues(round(effortStats$SD_effort[1],0),228) # major error
 # low effort
 compareValues(round(effortStats$mean_effort[2],0),-208) # match
 compareValues(round(effortStats$SD_effort[2],0),230) # major error
-
 ```
 
-Summary: There were a number of numerical errors in the descriptive statistics reported in the paper, namely in the reported standard deviation values for the mean agency and effort condition values (2 are minor numerical errors, and 2 are major numerical errors). Below is a summary of those differences. 
+Second attempt (with author assistance):
 
-1. Agency condition: M= -322ms, SD=239 (3pt difference from reported SD: 236)
-2. No Agency condition: M=-56ms, SD=266 (1pt difference from reported SD: 265)
+```{r}
+## gather mean reproduction errors by agency condition
+agencyEffortCombined_M = mean(expt1$agency_effortCombined)
+agencyEffortCombined_SD = sd(expt1$agency_effortCombined)
 
-3. Low Effort condition: M=-208ms, SD=288 (58pt difference from reported SD:230)
-4. High Effort condition: M=-170ms, SD=283 (55pt difference from reported SD:228)
+## gather mean reproduction errors by agency condition
+noagencyEffortCombined_M = mean(expt1$noagency_effortCombined)
+noagencyEffortCombined_SD = sd(expt1$noagency_effortCombined)
 
-Co-pilot's note: The data provided by the authors is not raw data per se, but are subject means already aggregated over different sets of trials. It is possible that these differences in SD calculations are from aggregating data in different ways, but I could not check this.
+## compare agency mean and sd (rounded) vs. reported values
+# agent = 1
+compareValues(obtainedValue = agencyEffortCombined_M, reportedValue = -322) # match
+compareValues(obtainedValue = agencyEffortCombined_SD, reportedValue =  236) # match
+
+# non-agent = 2
+compareValues(obtainedValue = noagencyEffortCombined_M, reportedValue = -56) # match
+compareValues(obtainedValue = noagencyEffortCombined_SD, reportedValue = 265) # match
+
+## gather reproduction errors by effort condition 
+highEffortAgencyCombined_M = mean(expt1$higheffort_agencyCombined)
+highEffortAgencyCombined_SD = sd(expt1$higheffort_agencyCombined)
+
+## gather mean reproduction errors by agency condition
+loweffortAgencyCombined_M = mean(expt1$loweffort_agencyCombined)
+loweffortAgencyCombined_SD = sd(expt1$loweffort_agencyCombined)
+
+## compare effort mean and sd (rounded) vs. reported values
+# high effort
+compareValues(obtainedValue = highEffortAgencyCombined_M, reportedValue = -170) # match
+compareValues(obtainedValue = highEffortAgencyCombined_SD, reportedValue = 228) # match
+
+# low effort
+compareValues(obtainedValue = loweffortAgencyCombined_M,reportedValue = -208) # match
+compareValues(obtainedValue = loweffortAgencyCombined_SD,reportedValue = 230) # match
+```
+
+Summary: In our first attempt we encountered some errors. However, after discussing the issue with the authors we discovered we were aggregating the data incorrectly. When aggregation was done per the author's instructions, we could successfully reproduce all values.
+
+
 
 ### Inferential statistics
 
@@ -223,7 +264,6 @@ compareValues(reportedValue = 0.589, obtainedValue = abs(dz1)) # minor error
 compareValues(reportedValue = 0.27, obtainedValue = abs(dz2)) # match
 
 ```
-Summary: one major error reporting a t-value (reversed sign), one minor error reporting cohen's D.
 
 ## Step 5: Conclusion
 
@@ -233,14 +273,13 @@ codReport(Report_Type = 'joint',
           Article_ID = 'DFDwT', 
           Insufficient_Information_Errors = 0,
           Decision_Errors = 0, 
-          Major_Numerical_Errors = 2, 
-          Minor_Numerical_Errors = 4,
-          Author_Assistance = F)
+          Major_Numerical_Errors = 0, 
+          Minor_Numerical_Errors = 2,
+          Author_Assistance = T)
 ```
 
 
-This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced, but there were a few significant numerical errors that might technically classify the reproduction a failure. Namely, the standard deviation numbers for the mean interval reproduction errors for effort and agency conditions were off in the order of the hundreds. Otherwise, I was able to reproduce the main 2x2 anova analyses, which yielded two significant main effects of agency and effort conditions but no significant interaction effect.
-
+This reproducibility check appears to be a success in terms of the main findings and statistics being reproduced. We encountered some difficulties reproducing standard deviations at first. However, after discussing the issue with the authors, we discovered we were aggregating the data differently. When we followed the author's instructions, our reproducibility check was a complete success. 
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
 devtools::session_info()
